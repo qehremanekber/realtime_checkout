@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Checkout Tracker</title>
+
+  <style>
+
+     
+
+     .checkout {
+
+      padding: 10px;
+
+      margin-bottom: 5px;
+
+      border: 1px solid #ccc;
+
+    }
+
+ 
+
+   
+
+    .active {
+
+      background-color: orange;
+
+    }
+
+ 
+
+    .completed {
+
+      background-color: green;
+
+    }
+
+ 
+
+    table {
+
+      border-collapse: collapse;
+
+      width: 100%;
+
+      margin-top: 20px;
+
+    }
+
+ 
+
+    th, td {
+
+      border: 1px solid #ddd;
+
+      padding: 8px;
+
+      text-align: left;
+
+    }
+
+ 
+
+    th {
+
+      background-color: #d0f7ac;
+
+    }
+
+    body {
+
+      font-family: Arial, sans-serif;
+
+      margin: 0;
+
+      padding: 0;
+
+      background-color: #f7f7f7;
+
+    }
+
+ 
+
+    .container {
+
+      max-width: 800px;
+
+      margin: 0 auto;
+
+      padding: 20px;
+
+      background-color: #fff;
+
+      border-radius: 5px;
+
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+    }
+
+ 
+
+    input[type="text"],
+
+    textarea {
+
+      width: 100%;
+
+      padding: 10px;
+
+      margin: 5px 0;
+
+      border: 1px solid #ccc;
+
+      border-radius: 5px;
+
+    }
+
+ 
+
+    button {
+
+      padding: 10px 20px;
+
+      background-color: #1f7739;
+
+      color: #fff;
+
+      border: none;
+
+      border-radius: 5px;
+
+      cursor: pointer;
+
+    }
+
+ 
+
+    button:hover {
+
+      background-color: #005f30;
+
+    }
+
+ 
+
+  </style>
+
+</head>
+
+<body>
+
+  <div>
+
+    <label for="userId">Enter your ID: </label>
+
+    <input type="text" id="userId" placeholder="ID">
+
+  </div>
+
+ 
+
+  <textarea id="checkoutNames" placeholder="Enter checkout names separated by commas or line breaks"></textarea>
+
+  <button onclick="addCheckouts()">Add Checkouts</button>
+
+ 
+
+  <div class="checkout-list">
+
+  </div>
+
+ 
+
+  <table id="checkout-table">
+
+    <thead>
+
+      <tr>
+
+        <th>ID</th>
+
+        <th>Checkout</th>
+
+        <th>Start Time</th>
+
+        <th>End Time</th>
+
+        <th>Time Spent (minutes)</th>
+
+      </tr>
+
+    </thead>
+
+    <tbody id="table-body">
+
+    </tbody>
+
+  </table>
+
+ 
+
+  <button onclick="exportToExcel()">Export to Excel</button>
+
+ 
+
+  <script>
+
+    const checkoutData = [];
+
+ 
+
+    function createCheckout(id, name) {
+
+      const checkout = document.createElement('div');
+
+      checkout.classList.add('checkout');
+
+      checkout.textContent = name;
+
+ 
+
+      let startTime, endTime;
+
+      checkout.addEventListener('click', function() {
+
+        if (checkout.classList.contains('completed')) {
+
+          //
+
+        } else {
+
+          if (checkout.classList.contains('active')) {
+
+            endTime = new Date();
+
+            const timeSpent = Math.floor((endTime - startTime) / 60000); // in minutes
+
+            checkout.classList.remove('active');
+
+            checkout.classList.add('completed');
+
+            checkout.textContent = name + ' - Completed';
+
+            updateTable(id, name, startTime, endTime, timeSpent);
+
+          } else {
+
+            startTime = new Date();
+
+            checkout.classList.add('active');
+
+            checkout.textContent = name + ' - Active';
+
+          }
+
+        }
+
+      });
+
+ 
+
+      document.querySelector('.checkout-list').appendChild(checkout);
+
+    }
+
+ 
+
+    function updateTable(id, checkout, startTime, endTime, timeSpent) {
+
+      const tableBody = document.getElementById('table-body');
+
+      const newRow = document.createElement('tr');
+
+      newRow.innerHTML = `
+
+        <td>${id}</td>
+
+        <td>${checkout}</td>
+
+        <td>${formatTime(startTime)}</td>
+
+        <td>${formatTime(endTime)}</td>
+
+        <td>${timeSpent}</td>
+
+      `;
+
+      tableBody.appendChild(newRow);
+
+      checkoutData.push({ id, checkout, startTime, endTime, timeSpent });
+
+    }
+
+ 
+
+    function removeTableRow(id, checkout) {
+
+      const index = checkoutData.findIndex(item => item.id === id && item.checkout === checkout);
+
+      checkoutData.splice(index, 1);
+
+      renderTable();
+
+    }
+
+ 
+
+    function renderTable() {
+
+      const tableBody = document.getElementById('table-body');
+
+      tableBody.innerHTML = '';
+
+      checkoutData.forEach(item => {
+
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+
+          <td>${item.id}</td>
+
+          <td>${item.checkout}</td>
+
+          <td>${formatTime(item.startTime)}</td>
+
+          <td>${formatTime(item.endTime)}</td>
+
+          <td>${item.timeSpent}</td>
+
+        `;
+
+        tableBody.appendChild(newRow);
+
+      });
+
+    }
+
+ 
+
+    function formatTime(time) {
+
+      return time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    }
+
+ 
+
+    function addCheckouts() {
+
+      const userIdInput = document.getElementById('userId');
+
+      const checkoutNamesInput = document.getElementById('checkoutNames');
+
+      const userId = userIdInput.value.trim();
+
+      const checkoutNames = checkoutNamesInput.value.split(/\n|,/).map(name => name.trim()).filter(name => name !== '');
+
+      checkoutNames.forEach(name => createCheckout(
